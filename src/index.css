@@ -164,3 +164,28 @@ button {
 .mensagem-erro {
   color: var(--color-danger);
 }
+
+.navegacao {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navegacao__conteudo {
+  display: flex;
+  gap: var(--spacing-4);
+  padding-top: var(--spacing-3);
+  padding-bottom: var(--spacing-3);
+}
+
+.navegacao__link {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.navegacao__link:hover {
+  color: var(--color-text);
+}
+
+.navegacao__link.active {
+  color: var(--color-primary);
+}

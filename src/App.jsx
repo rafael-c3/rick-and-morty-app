@@ -1,9 +1,22 @@
+import { Routes, Route } from 'react-router-dom'
+import { FavoritosProvider } from './context/FavoritosContext'
+import Navegacao from './components/Navegacao'
+import Personagens from './pages/Personagens'
+import Episodios from './pages/Episodios'
+import Localizacoes from './pages/Localizacoes'
+import Favoritos from './pages/Favoritos'
+
 function App() {
   return (
-    <div className="container">
-      <h1>Rick and Morty App</h1>
-      <p>Testando.</p>
-    </div>
+    <FavoritosProvider>
+      <Navegacao />
+      <Routes>
+        <Route path="/" element={<Personagens />} />
+        <Route path="/episodios" element={<Episodios />} />
+        <Route path="/localizacoes" element={<Localizacoes />} />
+        <Route path="/favoritos" element={<Favoritos />} />
+      </Routes>
+    </FavoritosProvider>
   )
 }
 
