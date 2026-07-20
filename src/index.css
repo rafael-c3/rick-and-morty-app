@@ -111,3 +111,56 @@ button {
 .personagem-card__favorito--ativo {
   color: var(--color-danger);
 }
+
+.filtros {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+  flex-wrap: wrap;
+}
+
+.filtros__input,
+.filtros__select {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-2) var(--spacing-3);
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.filtros__input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.grid-personagens {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-5);
+}
+
+.paginacao button {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-2) var(--spacing-4);
+  color: var(--color-text);
+}
+
+.paginacao button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mensagem-erro {
+  color: var(--color-danger);
+}
