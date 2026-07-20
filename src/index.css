@@ -189,3 +189,39 @@ button {
 .navegacao__link.active {
   color: var(--color-primary);
 }
+
+.grid-episodios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.episodio-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--spacing-3);
+}
+
+.episodio-card__codigo {
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: #0f1115;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: var(--spacing-2);
+}
+
+.episodio-card__nome {
+  margin: 0 0 var(--spacing-1);
+  font-size: 1.05rem;
+}
+
+.episodio-card__data,
+.episodio-card__personagens {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
