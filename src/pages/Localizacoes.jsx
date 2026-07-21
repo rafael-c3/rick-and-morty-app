@@ -1,57 +1,75 @@
 import { useState, useEffect, useMemo } from 'react'
+import LocalizacaoCard from '../components/LocalizacaoCard'
 
 const API_URL = 'https://rickandmortyapi.com/api/location'
+const ITENS_POR_PAGINA = 20
 
 function Localizacoes() {
-  const [localizacoes, setLocalizacoes] = useState([])
+  const [todasLocalizacoes, setTodasLocalizacoes] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
 
   const [tipo, setTipo] = useState('')
   const [pagina, setPagina] = useState(1)
-  const [totalPaginas, setTotalPaginas] = useState(1)
 
   useEffect(() => {
-    async function buscarLocalizacoes() {
+    async function buscarTodasLocalizacoes() {
       setCarregando(true)
       setErro(null)
 
-      const params = new URLSearchParams()
-      params.set('page', pagina)
-
       try {
-        const resposta = await fetch(`${API_URL}?${params.toString()}`)
+        const primeiraResposta = await fetch(`${API_URL}?page=1`)
+        if (!primeiraResposta.ok) throw new Error('Erro ao buscar localizações')
+        const primeiraPagina = await primeiraResposta.json()
 
-        if (!resposta.ok) {
-          throw new Error('Erro ao buscar localizações')
+        const totalPaginasApi = primeiraPagina.info.pages
+        let todas = [...primeiraPagina.results]
+
+        if (totalPaginasApi > 1) {
+          const restantes = await Promise.all(
+            Array.from({ length: totalPaginasApi - 1 }, (_, i) =>
+              fetch(`${API_URL}?page=${i + 2}`).then((r) => r.json())
+            )
+          )
+          restantes.forEach((pagina) => {
+            todas = todas.concat(pagina.results)
+          })
         }
 
-        const dados = await resposta.json()
-        setLocalizacoes(dados.results)
-        setTotalPaginas(dados.info.pages)
+        setTodasLocalizacoes(todas)
       } catch (err) {
         setErro(err.message)
-        setLocalizacoes([])
+        setTodasLocalizacoes([])
       } finally {
         setCarregando(false)
       }
     }
 
-    buscarLocalizacoes()
-  }, [pagina])
+    buscarTodasLocalizacoes()
+  }, [])
 
-  // Extrai os tipos únicos presentes na página atual, pra montar as opções do select dinamicamente
   const tiposDisponiveis = useMemo(() => {
-    const tipos = new Set(localizacoes.map((loc) => loc.type).filter(Boolean))
+    const tipos = new Set(todasLocalizacoes.map((loc) => loc.type).filter(Boolean))
     return Array.from(tipos).sort()
-  }, [localizacoes])
+  }, [todasLocalizacoes])
 
   const localizacoesFiltradas = tipo
-    ? localizacoes.filter((loc) => loc.type === tipo)
-    : localizacoes
+    ? todasLocalizacoes.filter((loc) => loc.type === tipo)
+    : todasLocalizacoes
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(localizacoesFiltradas.length / ITENS_POR_PAGINA)
+  )
+
+  const localizacoesDaPagina = localizacoesFiltradas.slice(
+    (pagina - 1) * ITENS_POR_PAGINA,
+    pagina * ITENS_POR_PAGINA
+  )
 
   function handleTipoChange(e) {
     setTipo(e.target.value)
+    setPagina(1)
   }
 
   return (
@@ -75,25 +93,17 @@ function Localizacoes() {
 
       {carregando && <p>Carregando...</p>}
       {erro && <p className="mensagem-erro">Erro: {erro}</p>}
-      {!carregando && !erro && localizacoesFiltradas.length === 0 && (
-        <p>Nenhuma localização encontrada nesta página para o filtro selecionado.</p>
+      {!carregando && !erro && localizacoesDaPagina.length === 0 && (
+        <p>Nenhuma localização encontrada para o filtro selecionado.</p>
       )}
 
       <div className="grid-localizacoes">
-        {localizacoesFiltradas.map((localizacao) => (
-          <div key={localizacao.id} className="localizacao-card">
-            <h3 className="localizacao-card__nome">{localizacao.name}</h3>
-            <p className="localizacao-card__info">
-              <strong>Tipo:</strong> {localizacao.type || 'Desconhecido'}
-            </p>
-            <p className="localizacao-card__info">
-              <strong>Dimensão:</strong> {localizacao.dimension || 'Desconhecida'}
-            </p>
-          </div>
+        {localizacoesDaPagina.map((localizacao) => (
+          <LocalizacaoCard key={localizacao.id} localizacao={localizacao} />
         ))}
       </div>
 
-      {!carregando && (
+      {!carregando && localizacoesFiltradas.length > 0 && (
         <div className="paginacao">
           <button
             onClick={() => setPagina((p) => p - 1)}

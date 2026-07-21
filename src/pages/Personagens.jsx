@@ -9,30 +9,48 @@ function Personagens() {
   const [erro, setErro] = useState(null)
 
   const [busca, setBusca] = useState('')
+  const [buscaDebounced, setBuscaDebounced] = useState('')
   const [status, setStatus] = useState('')
   const [pagina, setPagina] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
 
   const inputBuscaRef = useRef(null)
 
-  // Foco automático no campo de busca quando a página carrega
   useEffect(() => {
     inputBuscaRef.current?.focus()
   }, [])
 
-  // Busca dados sempre que busca, status ou página mudam
+  // Debounce: só atualiza buscaDebounced 400ms depois que o usuário para de digitar.
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setBuscaDebounced(busca)
+      setPagina(1)
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [busca])
+
+  useEffect(() => {
+    setPagina(1)
+  }, [status])
+
+  // Busca dados com AbortController pra cancelar requisições antigas
+  useEffect(() => {
+    const controller = new AbortController()
+
     async function buscarPersonagens() {
       setCarregando(true)
       setErro(null)
 
       const params = new URLSearchParams()
       params.set('page', pagina)
-      if (busca) params.set('name', busca)
+      if (buscaDebounced) params.set('name', buscaDebounced)
       if (status) params.set('status', status)
 
       try {
-        const resposta = await fetch(`${API_URL}?${params.toString()}`)
+        const resposta = await fetch(`${API_URL}?${params.toString()}`, {
+          signal: controller.signal,
+        })
 
         if (!resposta.ok) {
           if (resposta.status === 404) {
@@ -47,25 +65,26 @@ function Personagens() {
         const dados = await resposta.json()
         setPersonagens(dados.results)
         setTotalPaginas(dados.info.pages)
+        setCarregando(false)
       } catch (err) {
+        if (err.name === 'AbortError') return
         setErro(err.message)
         setPersonagens([])
-      } finally {
         setCarregando(false)
       }
     }
 
     buscarPersonagens()
-  }, [busca, status, pagina])
+
+    return () => controller.abort()
+  }, [buscaDebounced, status, pagina])
 
   function handleBuscaChange(e) {
     setBusca(e.target.value)
-    setPagina(1) // volta pra página 1 sempre que muda a busca
   }
 
   function handleStatusChange(e) {
     setStatus(e.target.value)
-    setPagina(1)
   }
 
   return (

@@ -1,59 +1,75 @@
 import { useState, useEffect } from 'react'
+import EpisodioCard from '../components/EpisodioCard'
 
 const API_URL = 'https://rickandmortyapi.com/api/episode'
+const ITENS_POR_PAGINA = 20
 
-// Extrai o número da temporada a partir do código, ex: "S02E05" -> "02"
 function extrairTemporada(codigo) {
   const match = codigo.match(/S(\d+)E\d+/)
   return match ? match[1] : null
 }
 
 function Episodios() {
-  const [episodios, setEpisodios] = useState([])
+  const [todosEpisodios, setTodosEpisodios] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
 
   const [temporada, setTemporada] = useState('')
   const [pagina, setPagina] = useState(1)
-  const [totalPaginas, setTotalPaginas] = useState(1)
 
   useEffect(() => {
-    async function buscarEpisodios() {
+    async function buscarTodosEpisodios() {
       setCarregando(true)
       setErro(null)
 
-      const params = new URLSearchParams()
-      params.set('page', pagina)
-
       try {
-        const resposta = await fetch(`${API_URL}?${params.toString()}`)
+        const primeiraResposta = await fetch(`${API_URL}?page=1`)
+        if (!primeiraResposta.ok) throw new Error('Erro ao buscar episódios')
+        const primeiraPagina = await primeiraResposta.json()
 
-        if (!resposta.ok) {
-          throw new Error('Erro ao buscar episódios')
+        const totalPaginasApi = primeiraPagina.info.pages
+        let todos = [...primeiraPagina.results]
+
+        if (totalPaginasApi > 1) {
+          const restantes = await Promise.all(
+            Array.from({ length: totalPaginasApi - 1 }, (_, i) =>
+              fetch(`${API_URL}?page=${i + 2}`).then((r) => r.json())
+            )
+          )
+          restantes.forEach((pagina) => {
+            todos = todos.concat(pagina.results)
+          })
         }
 
-        const dados = await resposta.json()
-        setEpisodios(dados.results)
-        setTotalPaginas(dados.info.pages)
+        setTodosEpisodios(todos)
       } catch (err) {
         setErro(err.message)
-        setEpisodios([])
+        setTodosEpisodios([])
       } finally {
         setCarregando(false)
       }
     }
 
-    buscarEpisodios()
-  }, [pagina])
+    buscarTodosEpisodios()
+  }, [])
 
-  // Filtro de temporada é aplicado no que já veio da API (client-side),
-  // já que a API não tem um parâmetro de busca por temporada.
   const episodiosFiltrados = temporada
-    ? episodios.filter((ep) => extrairTemporada(ep.episode) === temporada)
-    : episodios
+    ? todosEpisodios.filter((ep) => extrairTemporada(ep.episode) === temporada)
+    : todosEpisodios
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(episodiosFiltrados.length / ITENS_POR_PAGINA)
+  )
+
+  const episodiosDaPagina = episodiosFiltrados.slice(
+    (pagina - 1) * ITENS_POR_PAGINA,
+    pagina * ITENS_POR_PAGINA
+  )
 
   function handleTemporadaChange(e) {
     setTemporada(e.target.value)
+    setPagina(1)
   }
 
   return (
@@ -77,24 +93,17 @@ function Episodios() {
 
       {carregando && <p>Carregando...</p>}
       {erro && <p className="mensagem-erro">Erro: {erro}</p>}
-      {!carregando && !erro && episodiosFiltrados.length === 0 && (
-        <p>Nenhum episódio encontrado nesta página para o filtro selecionado.</p>
+      {!carregando && !erro && episodiosDaPagina.length === 0 && (
+        <p>Nenhum episódio encontrado para o filtro selecionado.</p>
       )}
 
       <div className="grid-episodios">
-        {episodiosFiltrados.map((episodio) => (
-          <div key={episodio.id} className="episodio-card">
-            <span className="episodio-card__codigo">{episodio.episode}</span>
-            <h3 className="episodio-card__nome">{episodio.name}</h3>
-            <p className="episodio-card__data">{episodio.air_date}</p>
-            <p className="episodio-card__personagens">
-              {episodio.characters.length} personagens
-            </p>
-          </div>
+        {episodiosDaPagina.map((episodio) => (
+          <EpisodioCard key={episodio.id} episodio={episodio} />
         ))}
       </div>
 
-      {!carregando && (
+      {!carregando && episodiosFiltrados.length > 0 && (
         <div className="paginacao">
           <button
             onClick={() => setPagina((p) => p - 1)}
