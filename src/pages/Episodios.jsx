@@ -4,6 +4,14 @@ import EpisodioCard from '../components/EpisodioCard'
 const API_URL = 'https://rickandmortyapi.com/api/episode'
 const ITENS_POR_PAGINA = 20
 
+const TEMPORADAS_FILTRO = [
+  { valor: '01', label: 'Temporada 1' },
+  { valor: '02', label: 'Temporada 2' },
+  { valor: '03', label: 'Temporada 3' },
+  { valor: '04', label: 'Temporada 4' },
+  { valor: '05', label: 'Temporada 5' },
+]
+
 function extrairTemporada(codigo) {
   const match = codigo.match(/S(\d+)E\d+/)
   return match ? match[1] : null
@@ -67,8 +75,8 @@ function Episodios() {
     pagina * ITENS_POR_PAGINA
   )
 
-  function handleTemporadaChange(e) {
-    setTemporada(e.target.value)
+  function handleTemporadaClick(novaTemporada) {
+    setTemporada(novaTemporada)
     setPagina(1)
   }
 
@@ -76,19 +84,22 @@ function Episodios() {
     <div className="container">
       <h1>Episódios</h1>
 
-      <div className="filtros">
-        <select
-          value={temporada}
-          onChange={handleTemporadaChange}
-          className="filtros__select"
+      <div className="filtro-pills">
+        <button
+          className={`filtro-pill ${temporada === '' ? 'filtro-pill--ativo' : ''}`}
+          onClick={() => handleTemporadaClick('')}
         >
-          <option value="">Todas as temporadas</option>
-          <option value="01">Temporada 1</option>
-          <option value="02">Temporada 2</option>
-          <option value="03">Temporada 3</option>
-          <option value="04">Temporada 4</option>
-          <option value="05">Temporada 5</option>
-        </select>
+          Todas
+        </button>
+        {TEMPORADAS_FILTRO.map((t) => (
+          <button
+            key={t.valor}
+            className={`filtro-pill ${temporada === t.valor ? 'filtro-pill--ativo' : ''}`}
+            onClick={() => handleTemporadaClick(t.valor)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {carregando && <p>Carregando...</p>}

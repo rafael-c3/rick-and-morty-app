@@ -3,6 +3,12 @@ import PersonagemCard from '../components/PersonagemCard'
 
 const API_URL = 'https://rickandmortyapi.com/api/character'
 
+const STATUS_FILTRO = [
+  { valor: 'alive', label: 'Vivo' },
+  { valor: 'dead', label: 'Morto' },
+  { valor: 'unknown', label: 'Desconhecido' },
+]
+
 function Personagens() {
   const [personagens, setPersonagens] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -20,7 +26,6 @@ function Personagens() {
     inputBuscaRef.current?.focus()
   }, [])
 
-  // Debounce: só atualiza buscaDebounced 400ms depois que o usuário para de digitar.
   useEffect(() => {
     const timer = setTimeout(() => {
       setBuscaDebounced(busca)
@@ -34,7 +39,6 @@ function Personagens() {
     setPagina(1)
   }, [status])
 
-  // Busca dados com AbortController pra cancelar requisições antigas
   useEffect(() => {
     const controller = new AbortController()
 
@@ -83,34 +87,39 @@ function Personagens() {
     setBusca(e.target.value)
   }
 
-  function handleStatusChange(e) {
-    setStatus(e.target.value)
+  function handleStatusClick(novoStatus) {
+    setStatus(novoStatus)
   }
 
   return (
     <div className="container">
       <h1>Personagens</h1>
 
-      <div className="filtros">
-        <input
-          ref={inputBuscaRef}
-          type="text"
-          placeholder="Buscar por nome..."
-          value={busca}
-          onChange={handleBuscaChange}
-          className="filtros__input"
-        />
+      <input
+        ref={inputBuscaRef}
+        type="text"
+        placeholder="Buscar por nome..."
+        value={busca}
+        onChange={handleBuscaChange}
+        className="filtros__input filtros__input--full"
+      />
 
-        <select
-          value={status}
-          onChange={handleStatusChange}
-          className="filtros__select"
+      <div className="filtro-pills">
+        <button
+          className={`filtro-pill ${status === '' ? 'filtro-pill--ativo' : ''}`}
+          onClick={() => handleStatusClick('')}
         >
-          <option value="">Todos os status</option>
-          <option value="alive">Vivo</option>
-          <option value="dead">Morto</option>
-          <option value="unknown">Desconhecido</option>
-        </select>
+          Todos
+        </button>
+        {STATUS_FILTRO.map((s) => (
+          <button
+            key={s.valor}
+            className={`filtro-pill ${status === s.valor ? 'filtro-pill--ativo' : ''}`}
+            onClick={() => handleStatusClick(s.valor)}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
 
       {carregando && <p>Carregando...</p>}

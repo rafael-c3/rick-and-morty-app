@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import LocalizacaoCard from '../components/LocalizacaoCard'
 
 const API_URL = 'https://rickandmortyapi.com/api/location'
 const ITENS_POR_PAGINA = 20
+
+const TIPOS_FILTRO = ['Planet', 'Space station', 'Microverse', 'TV', 'Resort']
 
 function Localizacoes() {
   const [todasLocalizacoes, setTodasLocalizacoes] = useState([])
@@ -48,11 +50,6 @@ function Localizacoes() {
     buscarTodasLocalizacoes()
   }, [])
 
-  const tiposDisponiveis = useMemo(() => {
-    const tipos = new Set(todasLocalizacoes.map((loc) => loc.type).filter(Boolean))
-    return Array.from(tipos).sort()
-  }, [todasLocalizacoes])
-
   const localizacoesFiltradas = tipo
     ? todasLocalizacoes.filter((loc) => loc.type === tipo)
     : todasLocalizacoes
@@ -67,8 +64,8 @@ function Localizacoes() {
     pagina * ITENS_POR_PAGINA
   )
 
-  function handleTipoChange(e) {
-    setTipo(e.target.value)
+  function handleTipoClick(novoTipo) {
+    setTipo(novoTipo)
     setPagina(1)
   }
 
@@ -76,19 +73,22 @@ function Localizacoes() {
     <div className="container">
       <h1>Localizações</h1>
 
-      <div className="filtros">
-        <select
-          value={tipo}
-          onChange={handleTipoChange}
-          className="filtros__select"
+      <div className="filtro-pills">
+        <button
+          className={`filtro-pill ${tipo === '' ? 'filtro-pill--ativo' : ''}`}
+          onClick={() => handleTipoClick('')}
         >
-          <option value="">Todos os tipos</option>
-          {tiposDisponiveis.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+          Todos
+        </button>
+        {TIPOS_FILTRO.map((t) => (
+          <button
+            key={t}
+            className={`filtro-pill ${tipo === t ? 'filtro-pill--ativo' : ''}`}
+            onClick={() => handleTipoClick(t)}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {carregando && <p>Carregando...</p>}
